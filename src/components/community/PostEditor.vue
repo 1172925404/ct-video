@@ -37,7 +37,6 @@
 
       <!-- 图片上传 -->
       <div class="image-upload-section">
-        <!-- 👇 修改：预览列表用 computed 属性 -->
         <div v-if="imagePreviews.length > 0" class="image-preview-list">
           <div
             v-for="(preview, index) in imagePreviews"
@@ -102,18 +101,12 @@ const userStore = useUserStore()
 
 const title = ref('')
 const content = ref('')
-// 存储 File 对象
 const imageFiles = ref([])
+// 👇 新增：存储图片预览的 Base64 URL
+const imagePreviews = ref([])
 const loading = ref(false)
 const uploading = ref(false)
 const fileInputRef = ref(null)
-
-// 👇 新增：计算属性，生成预览 URL
-const imagePreviews = computed(() => {
-  return imageFiles.value
-    .filter(file => file !== null && file !== undefined)
-    .map(file => URL.createObjectURL(file))
-})
 
 const canSubmit = computed(() => {
   return userStore.getIsLoggedIn &&
@@ -132,7 +125,6 @@ const handleFileSelect = async (e) => {
   const files = e.target.files
   if (!files || files.length === 0) return
 
-  // 限制最多6张
   const remaining = 6 - imageFiles.value.length
   const selectedFiles = Array.from(files).slice(0, remaining)
 
@@ -145,26 +137,29 @@ const handleFileSelect = async (e) => {
 
   try {
     for (const file of selectedFiles) {
-      // 检查文件大小（限制5MB，与后端一致）
       if (file.size > 5 * 1024 * 1024) {
         alert(`图片 ${file.name} 超过5MB，请压缩后上传`)
         continue
       }
-      // 检查文件格式
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
       if (!allowedTypes.includes(file.type)) {
         alert(`图片 ${file.name} 格式不支持，请上传 JPG、PNG、GIF、WEBP 格式`)
         continue
       }
-      // 直接存储 File 对象
+      // 存储 File 对象
       imageFiles.value.push(file)
+      // 👇 生成 Base64 预览
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        imagePreviews.value.push(e.target.result)
+      }
+      reader.readAsDataURL(file)
     }
   } catch (error) {
     console.error('图片处理失败:', error)
     alert('图片处理失败，请重试')
   } finally {
     uploading.value = false
-    // 清空 input，允许重复选择同一文件
     if (fileInputRef.value) {
       fileInputRef.value.value = ''
     }
@@ -174,6 +169,7 @@ const handleFileSelect = async (e) => {
 // 移除图片
 const removeImage = (index) => {
   imageFiles.value.splice(index, 1)
+  imagePreviews.value.splice(index, 1)
 }
 
 // 发布帖子
@@ -184,19 +180,18 @@ const handleSubmit = async () => {
 
   try {
     const user = userStore.user
-    // 传入 File 对象数组
     await communityStore.createPost(
       user.username,
       user.avatar,
       title.value.trim(),
       content.value.trim(),
-      imageFiles.value  // 直接传入 File 对象
+      imageFiles.value
     )
 
-    // 重置表单
     title.value = ''
     content.value = ''
     imageFiles.value = []
+    imagePreviews.value = []
 
     emit('post-created')
   } catch (error) {
