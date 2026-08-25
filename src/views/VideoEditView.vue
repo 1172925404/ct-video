@@ -114,6 +114,10 @@
   } from 'naive-ui'
   import { useVideoStore } from '@/stores/video'
   import { updateVideo, deleteVideo, uploadThumbnail } from '@/api/video'
+
+  // 👇 新增：环境变量配置
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+  const STATIC_BASE_URL = API_BASE_URL.replace('/api', '')
   
   const route = useRoute()
   const router = useRouter()
@@ -138,13 +142,13 @@
   
   const tagInput = ref('')
   
-  // 封面预览
+  // 👇 修改：封面预览（使用环境变量）
   const coverPreview = computed(() => {
     if (coverFile.value) {
       return URL.createObjectURL(coverFile.value)
     }
     if (video.value?.cover) {
-      return `http://localhost:3000${video.value.cover}`
+      return `${STATIC_BASE_URL}${video.value.cover}`
     }
     return ''
   })
