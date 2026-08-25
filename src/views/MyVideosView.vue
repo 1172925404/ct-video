@@ -75,6 +75,10 @@
   import { useVideoStore } from '@/stores/video'
   import { getUserVideos } from '@/api/user'
   import { deleteVideo } from '@/api/video'
+
+  // 👇 新增：环境变量配置
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+  const STATIC_BASE_URL = API_BASE_URL.replace('/api', '')
   
   dayjs.extend(relativeTime)
   dayjs.locale('zh-cn')
@@ -110,11 +114,11 @@
     }
   }
   
-  // ===== 获取封面图完整地址 =====
+  // ===== 获取封面图完整地址（使用环境变量） =====
   const getCoverUrl = (cover) => {
     if (!cover) return 'https://picsum.photos/400/225'
     if (cover.startsWith('/uploads')) {
-      return `http://localhost:3000${cover}`
+      return `${STATIC_BASE_URL}${cover}`
     }
     return cover
   }
