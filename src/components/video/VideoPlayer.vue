@@ -67,6 +67,10 @@ import 'dayjs/locale/zh-cn'
 import VideoActions from './VideoActions.vue'
 import { useUserStore } from '@/stores/user'
 
+// 👇 新增：环境变量配置
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const STATIC_BASE_URL = API_BASE_URL.replace('/api', '')
+
 const userStore = useUserStore()
 
 dayjs.extend(relativeTime)
@@ -90,7 +94,8 @@ const videoUrl = computed(() => {
   if (props.video.url) {
     // 如果是相对路径（以 /uploads 开头），拼接后端地址
     if (props.video.url.startsWith('/uploads')) {
-      return `http://localhost:3000${props.video.url}`
+      // 👇 使用环境变量
+      return `${STATIC_BASE_URL}${props.video.url}`
     }
     return props.video.url
   }
