@@ -39,9 +39,11 @@ import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/zh-cn'
-// 导入 userStore
 import { useUserStore } from '@/stores/user'
-const userStore = useUserStore()
+
+// 👇 新增：环境变量配置
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const STATIC_BASE_URL = API_BASE_URL.replace('/api', '')
 
 // 扩展 dayjs 支持相对时间
 dayjs.extend(relativeTime)
@@ -55,6 +57,7 @@ const props = defineProps({
 })
 
 const router = useRouter()
+const userStore = useUserStore()
 
 // 👇 新增：计算封面图完整地址
 const coverUrl = computed(() => {
@@ -64,7 +67,8 @@ const coverUrl = computed(() => {
   }
   // 如果是相对路径（以 /uploads 开头），拼接后端地址
   if (props.video.cover.startsWith('/uploads')) {
-    return `http://localhost:3000${props.video.cover}`
+    // 👇 使用环境变量
+    return `${STATIC_BASE_URL}${props.video.cover}`
   }
   return props.video.cover
 })
@@ -74,7 +78,7 @@ const goToDetail = () => {
   router.push(`/video/${props.video.id}`)
 }
 
-// 修改 goToUser 方法
+// 👇 修改：跳转到用户主页
 const goToUser = (userId) => {
   if (!userId) return
   // 如果是当前用户，跳转到 /user/me
