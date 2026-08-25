@@ -1,0 +1,229 @@
+// backend/prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// 用户表
+// ============================================================
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  email     String?
+  avatar    String?
+  bio       String?
+  createdAt DateTime @default(now())
+  
+  // 关联
+  videos    Video[]
+  favorites Favorite[]
+  histories History[]
+  comments  Comment[]
+  posts     Post[]
+  postComments PostComment[]
+  
+  // 点赞关联
+  videoLikes   VideoLike[]    // 视频点赞
+  postLikes    PostLike[]     // 帖子点赞
+  commentLikes CommentLike[]  // 评论点赞
+
+  // 关注关联
+  following Follow[] @relation("follower")  // 我关注的人
+  followers Follow[] @relation("following") // 关注我的人
+
+  // 👇 新增：通知关联
+  notifications Notification[] @relation("user")    // 我收到的通知
+  sentNotifications Notification[] @relation("sender") // 我发出的通知
+}
+
+// ============================================================
+// 视频表
+// ============================================================
+model Video {
+  id           Int       @id @default(autoincrement())
+  title        String
+  description  String?
+  url          String
+  cover        String?
+  authorId     Int
+  views        Int       @default(0)
+  likes        Int       @default(0)
+  duration     String?
+  tags         String?
+  createdAt    DateTime  @default(now())
+  
+  author       User      @relation(fields: [authorId], references: [id])
+  favorites    Favorite[]
+  histories    History[]
+  comments     Comment[]
+  
+  // 视频点赞关联
+  videoLikes   VideoLike[]
+}
+
+// ============================================================
+// 收藏表
+// ============================================================
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  videoId   Int
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id])
+  video     Video    @relation(fields: [videoId], references: [id])
+  
+  @@unique([userId, videoId])
+}
+
+// ============================================================
+// 观看历史表
+// ============================================================
+model History {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  videoId   Int
+  progress  Int      @default(0)  // 播放进度（秒）
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id])
+  video     Video    @relation(fields: [videoId], references: [id])
+  
+  @@unique([userId, videoId])
+}
+
+// ============================================================
+// 视频评论表
+// ============================================================
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  authorId  Int
+  videoId   Int
+  parentId  Int?      // 回复的评论ID（可选）
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+  
+  author    User     @relation(fields: [authorId], references: [id])
+  video     Video    @relation(fields: [videoId], references: [id])
+  
+  // 评论点赞关联
+  commentLikes CommentLike[]
+}
+
+// ============================================================
+// 社区帖子表
+// ============================================================
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  authorId  Int
+  images    String?   // JSON 数组字符串
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+  
+  author    User     @relation(fields: [authorId], references: [id])
+  postComments PostComment[]
+  
+  // 帖子点赞关联
+  postLikes  PostLike[]
+}
+
+// ============================================================
+// 帖子评论表
+// ============================================================
+model PostComment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  authorId  Int
+  postId    Int
+  createdAt DateTime @default(now())
+  
+  author    User     @relation(fields: [authorId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+}
+
+// ============================================================
+// 关注表
+// ============================================================
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int      // 关注者ID（谁点的关注）
+  followingId Int      // 被关注者ID（被谁关注）
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("follower", fields: [followerId], references: [id])
+  following   User     @relation("following", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])  // 同一用户不能重复关注同一人
+}
+
+// ============================================================
+// 视频点赞表（记录谁点赞了哪个视频）
+// ============================================================
+model VideoLike {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  videoId   Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  video     Video    @relation(fields: [videoId], references: [id])
+
+  @@unique([userId, videoId])  // 同一用户对同一视频只能点赞一次
+}
+
+// ============================================================
+// 帖子点赞表
+// ============================================================
+model PostLike {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
+}
+
+// ============================================================
+// 评论点赞表
+// ============================================================
+model CommentLike {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  commentId Int
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  comment   Comment  @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, commentId])
+}
+
+// ============================================================
+// 👇 新增：通知表
+// ============================================================
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int      // 接收通知的用户ID（被评论的人/被关注的人）
+  type      String   // 'comment' | 'reply' | 'like' | 'follow'
+  content   String   // 通知内容，如 "xxx 评论了你的视频"
+  link      String   // 跳转链接，如 "/video/1" 或 "/post/2"
+  isRead    Boolean  @default(false)
+  senderId  Int      // 触发通知的用户ID（评论者/点赞者/关注者）
+  targetId  Int      // 目标ID（视频ID/帖子ID/评论ID）
+  createdAt DateTime @default(now())
+
+  user      User     @relation("user", fields: [userId], references: [id])
+  sender    User     @relation("sender", fields: [senderId], references: [id])
+}

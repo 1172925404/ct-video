@@ -1,0 +1,34 @@
+# render.yaml
+services:
+  # ===== 后端服务 =====
+  - type: web
+    name: ct-video-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: file:./prisma/dev.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 3000
+
+  # ===== 前端服务 =====
+  - type: web
+    name: ct-video-frontend
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview -- --host 0.0.0.0 --port 4173
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: ct-video-backend
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL

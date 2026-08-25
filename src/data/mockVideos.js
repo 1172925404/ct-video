@@ -1,0 +1,372 @@
+// src/data/mockVideos.js
+export const mockVideos = [
+  // ===== 第一批 =====
+  {
+    id: 1,
+    title: 'Vue 3 从入门到精通 - 2026最新教程',
+    author: '编程小白学堂',
+    authorAvatar: 'https://picsum.photos/seed/user1/100',
+    cover: 'https://picsum.photos/seed/vue/400/225',
+    views: 15234,
+    likes: 2345,
+    duration: '12:30',
+    pubDate: '2026-08-20',
+    tags: ['Vue', '前端', '教程']  // 新增
+  },
+  {
+    id: 2,
+    title: 'B站风格网站开发全流程记录',
+    author: '前端阿杰',
+    authorAvatar: 'https://picsum.photos/seed/user2/100',
+    cover: 'https://picsum.photos/seed/bilibili/400/225',
+    views: 8765,
+    likes: 1234,
+    duration: '08:45',
+    pubDate: '2026-08-19',
+    tags: ['Vue', '项目实战', '全栈']
+  },
+  {
+    id: 3,
+    title: 'Pinia 状态管理实战 - 替代 Vuex 的最佳方案',
+    author: 'CodeMaster',
+    authorAvatar: 'https://picsum.photos/seed/user3/100',
+    cover: 'https://picsum.photos/seed/pinia/400/225',
+    views: 6234,
+    likes: 987,
+    duration: '15:20',
+    pubDate: '2026-08-18',
+    tags: ['Vue', '状态管理', '进阶']
+  },
+  {
+    id: 4,
+    title: 'Naive UI 组件库全面使用指南',
+    author: 'UI设计师小美',
+    authorAvatar: 'https://picsum.photos/seed/user4/100',
+    cover: 'https://picsum.photos/seed/naive/400/225',
+    views: 4321,
+    likes: 654,
+    duration: '10:00',
+    pubDate: '2026-08-17',
+    tags: ['UI', '组件库', 'Vue']
+  },
+  {
+    id: 5,
+    title: 'Vue Router 4 高级用法 - 路由守卫与懒加载',
+    author: '技术胖哥',
+    authorAvatar: 'https://picsum.photos/seed/user5/100',
+    cover: 'https://picsum.photos/seed/router/400/225',
+    views: 3210,
+    likes: 543,
+    duration: '18:15',
+    pubDate: '2026-08-16',
+    tags: ['Vue', '路由', '进阶']
+  },
+  {
+    id: 6,
+    title: '2026前端必会：Vite 构建工具深度解析',
+    author: '前端老司机',
+    authorAvatar: 'https://picsum.photos/seed/user6/100',
+    cover: 'https://picsum.photos/seed/vite/400/225',
+    views: 2987,
+    likes: 432,
+    duration: '14:50',
+    pubDate: '2026-08-15',
+    tags: ['构建工具', 'Vite', '前端']
+  },
+
+  // ===== 第二批 =====
+  {
+    id: 7,
+    title: 'TypeScript 高级类型体操 - 从入门到放弃',
+    author: 'TS狂热者',
+    authorAvatar: 'https://picsum.photos/seed/user7/100',
+    cover: 'https://picsum.photos/seed/typescript/400/225',
+    views: 5432,
+    likes: 876,
+    duration: '22:10',
+    pubDate: '2026-08-14',
+    tags: ['TypeScript', '进阶', '前端']
+  },
+  {
+    id: 8,
+    title: 'CSS 动画从入门到精通 - 让页面动起来',
+    author: '动画达人',
+    authorAvatar: 'https://picsum.photos/seed/user8/100',
+    cover: 'https://picsum.photos/seed/css/400/225',
+    views: 7654,
+    likes: 1234,
+    duration: '16:40',
+    pubDate: '2026-08-13',
+    tags: ['CSS', '动画', '前端']
+  },
+  {
+    id: 9,
+    title: 'Node.js 后端开发实战 - 从零搭建 API 服务',
+    author: '后端小王子',
+    authorAvatar: 'https://picsum.photos/seed/user9/100',
+    cover: 'https://picsum.photos/seed/nodejs/400/225',
+    views: 8901,
+    likes: 1456,
+    duration: '25:00',
+    pubDate: '2026-08-12',
+    tags: ['Node.js', '后端', '全栈']
+  },
+  {
+    id: 10,
+    title: 'Webpack 5 核心原理与配置优化',
+    author: '构建工具专家',
+    authorAvatar: 'https://picsum.photos/seed/user10/100',
+    cover: 'https://picsum.photos/seed/webpack/400/225',
+    views: 3456,
+    likes: 567,
+    duration: '19:30',
+    pubDate: '2026-08-11',
+    tags: ['构建工具', 'Webpack', '前端']
+  },
+  {
+    id: 11,
+    title: '前端性能优化 - 让网站飞起来',
+    author: '性能优化师',
+    authorAvatar: 'https://picsum.photos/seed/user11/100',
+    cover: 'https://picsum.photos/seed/performance/400/225',
+    views: 6789,
+    likes: 987,
+    duration: '13:20',
+    pubDate: '2026-08-10',
+    tags: ['性能优化', '前端', '进阶']
+  },
+  {
+    id: 12,
+    title: 'Git 高级技巧 - 团队协作必备',
+    author: '版本控制大师',
+    authorAvatar: 'https://picsum.photos/seed/user12/100',
+    cover: 'https://picsum.photos/seed/git/400/225',
+    views: 4567,
+    likes: 765,
+    duration: '11:00',
+    pubDate: '2026-08-09',
+    tags: ['Git', '团队协作', '工具']
+  },
+
+  // ===== 第三批 =====
+  {
+    id: 13,
+    title: 'React vs Vue - 2026年如何选择前端框架',
+    author: '技术分析员',
+    authorAvatar: 'https://picsum.photos/seed/user13/100',
+    cover: 'https://picsum.photos/seed/react-vue/400/225',
+    views: 12345,
+    likes: 2345,
+    duration: '20:00',
+    pubDate: '2026-08-08',
+    tags: ['Vue', 'React', '前端']
+  },
+  {
+    id: 14,
+    title: 'Sass 从入门到精通 - 让 CSS 更强大',
+    author: 'CSS艺术家',
+    authorAvatar: 'https://picsum.photos/seed/user14/100',
+    cover: 'https://picsum.photos/seed/sass/400/225',
+    views: 2345,
+    likes: 345,
+    duration: '09:15',
+    pubDate: '2026-08-07',
+    tags: ['CSS', 'Sass', '前端']
+  },
+  {
+    id: 15,
+    title: 'Chrome DevTools 高级调试技巧',
+    author: '调试专家',
+    authorAvatar: 'https://picsum.photos/seed/user15/100',
+    cover: 'https://picsum.photos/seed/devtools/400/225',
+    views: 5678,
+    likes: 876,
+    duration: '17:45',
+    pubDate: '2026-08-06',
+    tags: ['调试', '工具', '前端']
+  },
+  {
+    id: 16,
+    title: 'RESTful API 设计最佳实践',
+    author: 'API架构师',
+    authorAvatar: 'https://picsum.photos/seed/user16/100',
+    cover: 'https://picsum.photos/seed/api/400/225',
+    views: 7890,
+    likes: 1234,
+    duration: '14:30',
+    pubDate: '2026-08-05',
+    tags: ['API', '后端', '全栈']
+  },
+  {
+    id: 17,
+    title: 'Docker 容器化部署 - 前端必知必会',
+    author: 'DevOps工程师',
+    authorAvatar: 'https://picsum.photos/seed/user17/100',
+    cover: 'https://picsum.photos/seed/docker/400/225',
+    views: 4567,
+    likes: 654,
+    duration: '21:00',
+    pubDate: '2026-08-04',
+    tags: ['Docker', '部署', 'DevOps']
+  },
+  {
+    id: 18,
+    title: 'JavaScript 设计模式 - 写出优雅的代码',
+    author: '设计模式专家',
+    authorAvatar: 'https://picsum.photos/seed/user18/100',
+    cover: 'https://picsum.photos/seed/design-pattern/400/225',
+    views: 9876,
+    likes: 1567,
+    duration: '23:30',
+    pubDate: '2026-08-03',
+    tags: ['JavaScript', '设计模式', '进阶']
+  },
+
+  // ===== 第四批 =====
+  {
+    id: 19,
+    title: 'AI 辅助编程 - Copilot 使用指南',
+    author: 'AI爱好者',
+    authorAvatar: 'https://picsum.photos/seed/user19/100',
+    cover: 'https://picsum.photos/seed/ai/400/225',
+    views: 11234,
+    likes: 2345,
+    duration: '10:30',
+    pubDate: '2026-08-02',
+    tags: ['AI', '工具', '效率']
+  },
+  {
+    id: 20,
+    title: 'Electron 桌面应用开发 - 从零到发布',
+    author: '桌面开发者',
+    authorAvatar: 'https://picsum.photos/seed/user20/100',
+    cover: 'https://picsum.photos/seed/electron/400/225',
+    views: 3456,
+    likes: 567,
+    duration: '26:00',
+    pubDate: '2026-08-01',
+    tags: ['Electron', '桌面应用', '全栈']
+  },
+  {
+    id: 21,
+    title: '响应式设计 - 一套代码适配所有屏幕',
+    author: '响应式达人',
+    authorAvatar: 'https://picsum.photos/seed/user21/100',
+    cover: 'https://picsum.photos/seed/responsive/400/225',
+    views: 6543,
+    likes: 987,
+    duration: '12:15',
+    pubDate: '2026-07-31',
+    tags: ['CSS', '响应式', 'UI']
+  },
+  {
+    id: 22,
+    title: 'Vue 3 源码解读 - 深入响应式原理',
+    author: '源码爱好者',
+    authorAvatar: 'https://picsum.photos/seed/user22/100',
+    cover: 'https://picsum.photos/seed/vue-source/400/225',
+    views: 8765,
+    likes: 1345,
+    duration: '28:00',
+    pubDate: '2026-07-30',
+    tags: ['Vue', '源码', '进阶']
+  },
+  {
+    id: 23,
+    title: 'Nginx 配置实战 - 部署 Vue 项目',
+    author: '服务器运维',
+    authorAvatar: 'https://picsum.photos/seed/user23/100',
+    cover: 'https://picsum.photos/seed/nginx/400/225',
+    views: 2345,
+    likes: 432,
+    duration: '11:45',
+    pubDate: '2026-07-29',
+    tags: ['Nginx', '部署', 'DevOps']
+  },
+  {
+    id: 24,
+    title: 'Web 安全基础 - XSS 与 CSRF 防御',
+    author: '安全专家',
+    authorAvatar: 'https://picsum.photos/seed/user24/100',
+    cover: 'https://picsum.photos/seed/security/400/225',
+    views: 7890,
+    likes: 1234,
+    duration: '18:30',
+    pubDate: '2026-07-28',
+    tags: ['安全', '前端', '进阶']
+  },
+
+  // ===== 第五批 =====
+  {
+    id: 25,
+    title: 'MongoDB 基础 - NoSQL 数据库入门',
+    author: '数据库玩家',
+    authorAvatar: 'https://picsum.photos/seed/user25/100',
+    cover: 'https://picsum.photos/seed/mongodb/400/225',
+    views: 4321,
+    likes: 654,
+    duration: '15:00',
+    pubDate: '2026-07-27',
+    tags: ['MongoDB', '数据库', '后端']
+  },
+  {
+    id: 26,
+    title: 'GraphQL 实践 - 替代 REST 的新选择',
+    author: 'API探索者',
+    authorAvatar: 'https://picsum.photos/seed/user26/100',
+    cover: 'https://picsum.photos/seed/graphql/400/225',
+    views: 5678,
+    likes: 876,
+    duration: '19:20',
+    pubDate: '2026-07-26',
+    tags: ['GraphQL', 'API', '后端']
+  },
+  {
+    id: 27,
+    title: '前端自动化测试 - Jest + Vue Test Utils',
+    author: '测试工程师',
+    authorAvatar: 'https://picsum.photos/seed/user27/100',
+    cover: 'https://picsum.photos/seed/testing/400/225',
+    views: 3456,
+    likes: 543,
+    duration: '16:00',
+    pubDate: '2026-07-25',
+    tags: ['测试', 'Jest', '前端']
+  },
+  {
+    id: 28,
+    title: 'JavaScript 进阶 - 闭包与原型链',
+    author: 'JS导师',
+    authorAvatar: 'https://picsum.photos/seed/user28/100',
+    cover: 'https://picsum.photos/seed/javascript/400/225',
+    views: 9876,
+    likes: 1567,
+    duration: '14:15',
+    pubDate: '2026-07-24',
+    tags: ['JavaScript', '进阶', '核心概念']
+  },
+  {
+    id: 29,
+    title: 'UI/UX 设计原则 - 打造用户体验极佳的产品',
+    author: 'UX设计师',
+    authorAvatar: 'https://picsum.photos/seed/user29/100',
+    cover: 'https://picsum.photos/seed/uiux/400/225',
+    views: 5432,
+    likes: 876,
+    duration: '17:30',
+    pubDate: '2026-07-23',
+    tags: ['UI', 'UX', '设计']
+  },
+  {
+    id: 30,
+    title: '全栈项目实战 - 从零构建完整应用',
+    author: '全栈工程师',
+    authorAvatar: 'https://picsum.photos/seed/user30/100',
+    cover: 'https://picsum.photos/seed/fullstack/400/225',
+    views: 12345,
+    likes: 2345,
+    duration: '30:00',
+    pubDate: '2026-07-22',
+    tags: ['全栈', '项目实战', 'Vue']
+  }
+]
