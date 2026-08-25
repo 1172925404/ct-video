@@ -37,14 +37,14 @@
 
       <!-- 图片上传 -->
       <div class="image-upload-section">
-        <div v-if="imageFiles.length > 0" class="image-preview-list">
+        <!-- 👇 修改：预览列表用 computed 属性 -->
+        <div v-if="imagePreviews.length > 0" class="image-preview-list">
           <div
-            v-for="(file, index) in imageFiles"
+            v-for="(preview, index) in imagePreviews"
             :key="index"
             class="image-preview-item"
           >
-            <!-- 👇 修改：添加 v-if="file" 确保 file 存在 -->
-            <img v-if="file" :src="URL.createObjectURL(file)" class="preview-image" />
+            <img :src="preview" class="preview-image" />
             <button class="remove-image" @click="removeImage(index)">×</button>
           </div>
         </div>
@@ -102,11 +102,18 @@ const userStore = useUserStore()
 
 const title = ref('')
 const content = ref('')
-// 修改：存储 File 对象而不是 Base64 URL
+// 存储 File 对象
 const imageFiles = ref([])
 const loading = ref(false)
 const uploading = ref(false)
 const fileInputRef = ref(null)
+
+// 👇 新增：计算属性，生成预览 URL
+const imagePreviews = computed(() => {
+  return imageFiles.value
+    .filter(file => file !== null && file !== undefined)
+    .map(file => URL.createObjectURL(file))
+})
 
 const canSubmit = computed(() => {
   return userStore.getIsLoggedIn &&
