@@ -183,6 +183,10 @@ import 'dayjs/locale/zh-cn'
 import { useCommunityStore } from '@/stores/community'
 import { useUserStore } from '@/stores/user'
 
+// 👇 新增：环境变量配置
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const STATIC_BASE_URL = API_BASE_URL.replace('/api', '')
+
 dayjs.extend(relativeTime)
 dayjs.locale('zh-cn')
 
@@ -196,12 +200,12 @@ const commentContent = ref('')
 const showImageModal = ref(false)
 const previewImageUrl = ref('')
 
-// 👇 新增：拼接图片完整地址
+// 👇 修改：拼接图片完整地址（使用环境变量）
 const getImageUrl = (url) => {
   if (!url) return ''
   if (url.startsWith('http')) return url
   if (url.startsWith('/uploads')) {
-    return `http://localhost:3000${url}`
+    return `${STATIC_BASE_URL}${url}`
   }
   return url
 }
