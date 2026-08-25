@@ -1,6 +1,9 @@
 // src/api/post.js
 import { get, post, del } from './request'
 
+// 根据环境设置 API 地址
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+
 // 获取帖子列表
 export const getPosts = () => {
   return get('/posts')
@@ -28,7 +31,8 @@ export const createPost = (title, content, images = []) => {
 
   const token = localStorage.getItem('token')
   
-  return fetch('http://localhost:3000/api/posts', {
+  // 👇 改用 API_BASE_URL
+  return fetch(`${API_BASE_URL}/posts`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`

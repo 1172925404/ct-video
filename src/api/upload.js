@@ -1,6 +1,9 @@
 // src/api/upload.js
 import { request } from './request'
 
+// 根据环境设置 API 地址
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+
 // 上传视频（支持进度回调）
 export const uploadVideo = (formData, onProgress) => {
   const token = localStorage.getItem('token')
@@ -8,7 +11,8 @@ export const uploadVideo = (formData, onProgress) => {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
 
-    xhr.open('POST', 'http://localhost:3000/api/upload/video')
+    // 👇 改用 API_BASE_URL
+    xhr.open('POST', `${API_BASE_URL}/upload/video`)
     xhr.setRequestHeader('Authorization', `Bearer ${token}`)
 
     // 上传进度
@@ -50,7 +54,8 @@ export const uploadThumbnail = (videoId, file) => {
 
   const token = localStorage.getItem('token')
 
-  return fetch('http://localhost:3000/api/upload/thumbnail', {
+  // 👇 改用 API_BASE_URL
+  return fetch(`${API_BASE_URL}/upload/thumbnail`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`
