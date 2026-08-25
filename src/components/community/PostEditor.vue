@@ -43,7 +43,8 @@
             :key="index"
             class="image-preview-item"
           >
-            <img :src="URL.createObjectURL(file)" class="preview-image" />
+            <!-- 👇 修改：添加 v-if="file" 确保 file 存在 -->
+            <img v-if="file" :src="URL.createObjectURL(file)" class="preview-image" />
             <button class="remove-image" @click="removeImage(index)">×</button>
           </div>
         </div>
