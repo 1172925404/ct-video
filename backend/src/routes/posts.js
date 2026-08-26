@@ -5,6 +5,7 @@ const { authenticate } = require('../middleware/auth')
 const multer = require('multer')  // 👈 新增
 const path = require('path')      // 👈 新增
 const fs = require('fs')          // 👈 新增
+const jwt = require('jsonwebtoken')  // 👈 新增
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -43,10 +44,22 @@ const upload = multer({
 })
 
 // ============================================================
-// 获取帖子列表
+// 获取帖子列表（包含当前用户是否已点赞）
 // ============================================================
 router.get('/', async (req, res) => {
   try {
+    // 👇 获取当前用户ID（如果有）
+    let currentUserId = null
+    const token = req.headers.authorization?.split(' ')[1]
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret-key')
+        currentUserId = decoded.id
+      } catch (e) {
+        // Token 无效，忽略
+      }
+    }
+
     const posts = await prisma.post.findMany({
       include: {
         author: {
@@ -63,6 +76,19 @@ router.get('/', async (req, res) => {
       orderBy: { createdAt: 'desc' }
     })
 
+    // 👇 如果用户已登录，查询每个帖子的点赞状态
+    let likedPostIds = []
+    if (currentUserId) {
+      const likes = await prisma.postLike.findMany({
+        where: {
+          userId: currentUserId,
+          postId: { in: posts.map(p => p.id) }
+        },
+        select: { postId: true }
+      })
+      likedPostIds = likes.map(l => l.postId)
+    }
+
     const formattedPosts = posts.map(p => ({
       id: p.id,
       userId: p.author.id,  // 👈 新增：用户ID
@@ -72,7 +98,7 @@ router.get('/', async (req, res) => {
       avatar: p.author.avatar,
       images: p.images ? JSON.parse(p.images) : [],
       likes: p.likes,
-      liked: false,
+      liked: likedPostIds.includes(p.id),  // 👈 从数据库读取真实点赞状态
       createdAt: p.createdAt,
       comments: p.postComments.map(c => ({
         id: c.id,
@@ -96,11 +122,23 @@ router.get('/', async (req, res) => {
 })
 
 // ============================================================
-// 获取帖子详情
+// 获取帖子详情（包含当前用户是否已点赞）
 // ============================================================
 router.get('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id)
+
+    // 👇 获取当前用户ID（如果有）
+    let currentUserId = null
+    const token = req.headers.authorization?.split(' ')[1]
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret-key')
+        currentUserId = decoded.id
+      } catch (e) {
+        // Token 无效，忽略
+      }
+    }
 
     const post = await prisma.post.findUnique({
       where: { id },
@@ -131,6 +169,20 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ message: '帖子不存在' })
     }
 
+    // 👇 查询当前用户是否已点赞
+    let liked = false
+    if (currentUserId) {
+      const like = await prisma.postLike.findUnique({
+        where: {
+          userId_postId: {
+            userId: currentUserId,
+            postId: id
+          }
+        }
+      })
+      liked = !!like
+    }
+
     const formattedPost = {
       id: post.id,
       userId: post.author.id,  // 👈 新增：用户ID
@@ -140,7 +192,7 @@ router.get('/:id', async (req, res) => {
       avatar: post.author.avatar,
       images: post.images ? JSON.parse(post.images) : [],
       likes: post.likes,
-      liked: false,
+      liked: liked,  // 👈 从数据库读取真实点赞状态
       createdAt: post.createdAt,
       comments: post.postComments.map(c => ({
         id: c.id,
