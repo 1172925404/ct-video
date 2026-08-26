@@ -7,11 +7,24 @@ const router = express.Router()
 const prisma = new PrismaClient()
 
 // ============================================================
-// 获取某个视频的所有评论
+// 获取某个视频的所有评论（包含当前用户是否已点赞）
 // ============================================================
 router.get('/video/:videoId', async (req, res) => {
   try {
     const videoId = parseInt(req.params.videoId)
+
+    // 👇 获取当前用户ID（如果有）
+    let currentUserId = null
+    const token = req.headers.authorization?.split(' ')[1]
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken')
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret-key')
+        currentUserId = decoded.id
+      } catch (e) {
+        // Token 无效，忽略
+      }
+    }
 
     const comments = await prisma.comment.findMany({
       where: { 
@@ -30,6 +43,19 @@ router.get('/video/:videoId', async (req, res) => {
       orderBy: { createdAt: 'desc' }
     })
 
+    // 👇 如果用户已登录，查询每个评论的点赞状态
+    let likedCommentIds = []
+    if (currentUserId) {
+      const likes = await prisma.commentLike.findMany({
+        where: {
+          userId: currentUserId,
+          commentId: { in: comments.map(c => c.id) }
+        },
+        select: { commentId: true }
+      })
+      likedCommentIds = likes.map(l => l.commentId)
+    }
+
     // 转换数据格式
     const formattedComments = comments.map(c => ({
       id: c.id,
@@ -39,7 +65,7 @@ router.get('/video/:videoId', async (req, res) => {
       content: c.content,
       createdAt: c.createdAt,
       likes: c.likes,
-      liked: false,  // 前端控制
+      liked: likedCommentIds.includes(c.id),  // 👈 从数据库读取真实点赞状态
       replies: []
     }))
 
