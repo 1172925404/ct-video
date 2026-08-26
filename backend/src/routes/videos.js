@@ -97,24 +97,26 @@ router.get('/', async (req, res) => {
       }
     }
 
-    // 转换数据格式，匹配前端期望的字段
-    const formattedVideos = videos.map(v => ({
-      id: v.id,
-      title: v.title,
-      description: v.description,
-      cover: v.cover,
-      url: v.url,
-      views: v.views,
-      likes: v.likes,
-      duration: v.duration || '00:00',
-      pubDate: v.createdAt,
-      author: v.author.username,
-      authorAvatar: v.author.avatar,
-      tags: v.tags ? JSON.parse(v.tags) : [],
-      authorId: v.authorId,  // 👈 新增：作者ID，用于前端判断权限
-      _liked: userLikedVideoIds.includes(v.id),           // 点赞状态
-      _favorited: userFavoritedVideoIds.includes(v.id)    // 👈 新增：收藏状态
-    }))
+    // 👇 修复：过滤掉 author 为 null 的视频，防止 500 错误
+    const formattedVideos = videos
+      .filter(v => v.author !== null && v.author !== undefined)
+      .map(v => ({
+        id: v.id,
+        title: v.title,
+        description: v.description,
+        cover: v.cover,
+        url: v.url,
+        views: v.views,
+        likes: v.likes,
+        duration: v.duration || '00:00',
+        pubDate: v.createdAt,
+        author: v.author.username,
+        authorAvatar: v.author.avatar,
+        tags: v.tags ? JSON.parse(v.tags) : [],
+        authorId: v.authorId,  // 👈 新增：作者ID，用于前端判断权限
+        _liked: userLikedVideoIds.includes(v.id),           // 点赞状态
+        _favorited: userFavoritedVideoIds.includes(v.id)    // 👈 新增：收藏状态
+      }))
 
     res.json({
       success: true,
@@ -155,6 +157,11 @@ router.get('/:id', async (req, res) => {
 
     if (!video) {
       return res.status(404).json({ message: '视频不存在' })
+    }
+
+    // 👇 修复：检查 video.author 是否存在
+    if (!video.author) {
+      return res.status(404).json({ message: '视频作者不存在，数据异常' })
     }
 
     // 👇 获取当前用户是否已点赞
