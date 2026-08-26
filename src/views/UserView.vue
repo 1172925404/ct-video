@@ -375,9 +375,37 @@ const formRules = {
   ]
 }
 
-// ===== 加载统计数据 =====
-const loadStats = () => {
-  stats.value = userStore.getUserStats()
+// ===== 加载统计数据（从后端 API） =====
+const loadStats = async () => {
+  try {
+    // 从后端获取统计数据
+    const response = await fetch('https://ct-video-production.up.railway.app/api/users/me/stats', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+    const data = await response.json()
+    if (data.success) {
+      stats.value = data.data
+    } else {
+      // 如果后端接口还没有，使用 store 的 fallback
+      const fallbackStats = userStore.getUserStats()
+      stats.value = {
+        favoritesCount: fallbackStats.favoritesCount || 0,
+        historyCount: fallbackStats.historyCount || 0,
+        commentCount: fallbackStats.commentCount || 0
+      }
+    }
+  } catch (error) {
+    console.error('加载统计数据失败:', error)
+    // 降级方案：使用 store 的统计数据
+    const fallbackStats = userStore.getUserStats()
+    stats.value = {
+      favoritesCount: fallbackStats.favoritesCount || 0,
+      historyCount: fallbackStats.historyCount || 0,
+      commentCount: fallbackStats.commentCount || 0
+    }
+  }
 }
 
 // ===== 加载关注统计 =====
@@ -503,8 +531,6 @@ watch(
 onMounted(() => {
   // 如果未登录，跳转到登录
   if (!userStore.getIsLoggedIn) {
-    // 但如果是查看他人主页，需要检查
-    // 实际上未登录应该先登录才能查看，但可以放宽
     return
   }
   
