@@ -146,4 +146,32 @@ router.get('/:id/videos', async (req, res) => {
   }
 })
 
+// ============================================================
+// 👇 新增：获取当前用户统计数据
+// ============================================================
+router.get('/me/stats', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id
+
+    const [favoritesCount, historyCount, commentCount] = await Promise.all([
+      prisma.favorite.count({ where: { userId } }),
+      prisma.history.count({ where: { userId } }),
+      prisma.comment.count({ where: { authorId: userId } })
+    ])
+
+    res.json({
+      success: true,
+      data: {
+        favoritesCount,
+        historyCount,
+        commentCount
+      }
+    })
+
+  } catch (error) {
+    console.error('获取用户统计错误:', error)
+    res.status(500).json({ message: '服务器内部错误' })
+  }
+})
+
 module.exports = router
