@@ -190,6 +190,19 @@ router.post('/:userId', authenticate, async (req, res) => {
       }
     })
 
+    // 👇 发送通知（不通知自己）
+    const { createNotification } = require('./notifications')
+    if (followerId !== followingId) {
+      await createNotification({
+        userId: followingId,
+        type: 'follow',
+        content: `${req.user.username} 关注了你`,
+        link: `/user/${followerId}`,
+        senderId: followerId,
+        targetId: followingId
+      })
+    }
+
     res.json({
       success: true,
       message: '关注成功'
