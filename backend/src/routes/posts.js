@@ -70,6 +70,15 @@ router.get('/', async (req, res) => {
           }
         },
         postComments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                username: true,
+                avatar: true
+              }
+            }
+          },
           orderBy: { createdAt: 'desc' }
         }
       },
@@ -89,26 +98,31 @@ router.get('/', async (req, res) => {
       likedPostIds = likes.map(l => l.postId)
     }
 
-    const formattedPosts = posts.map(p => ({
-      id: p.id,
-      userId: p.author.id,  // 👈 新增：用户ID
-      title: p.title,
-      content: p.content,
-      author: p.author.username,
-      avatar: p.author.avatar,
-      images: p.images ? JSON.parse(p.images) : [],
-      likes: p.likes,
-      liked: likedPostIds.includes(p.id),  // 👈 从数据库读取真实点赞状态
-      createdAt: p.createdAt,
-      comments: p.postComments.map(c => ({
-        id: c.id,
-        userId: c.author.id,  // 👈 新增：评论用户ID
-        author: c.author.username,
-        avatar: c.author.avatar,
-        content: c.content,
-        createdAt: c.createdAt
+    // 👇 修复：过滤掉 author 为 null 的帖子，并安全处理
+    const formattedPosts = posts
+      .filter(p => p.author !== null && p.author !== undefined)  // 过滤掉没有作者的帖子
+      .map(p => ({
+        id: p.id,
+        userId: p.author.id,  // 👈 此时 p.author 一定有值
+        title: p.title,
+        content: p.content,
+        author: p.author.username,
+        avatar: p.author.avatar,
+        images: p.images ? JSON.parse(p.images) : [],
+        likes: p.likes,
+        liked: likedPostIds.includes(p.id),
+        createdAt: p.createdAt,
+        comments: p.postComments
+          .filter(c => c.author !== null && c.author !== undefined)  // 👈 过滤评论中作者为 null 的
+          .map(c => ({
+            id: c.id,
+            userId: c.author.id,
+            author: c.author.username,
+            avatar: c.author.avatar,
+            content: c.content,
+            createdAt: c.createdAt
+          }))
       }))
-    }))
 
     res.json({
       success: true,
@@ -169,6 +183,11 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ message: '帖子不存在' })
     }
 
+    // 👇 修复：检查 post.author 是否存在
+    if (!post.author) {
+      return res.status(404).json({ message: '帖子作者不存在，数据异常' })
+    }
+
     // 👇 查询当前用户是否已点赞
     let liked = false
     if (currentUserId) {
@@ -185,23 +204,25 @@ router.get('/:id', async (req, res) => {
 
     const formattedPost = {
       id: post.id,
-      userId: post.author.id,  // 👈 新增：用户ID
+      userId: post.author.id,
       title: post.title,
       content: post.content,
       author: post.author.username,
       avatar: post.author.avatar,
       images: post.images ? JSON.parse(post.images) : [],
       likes: post.likes,
-      liked: liked,  // 👈 从数据库读取真实点赞状态
+      liked: liked,
       createdAt: post.createdAt,
-      comments: post.postComments.map(c => ({
-        id: c.id,
-        userId: c.author.id,  // 👈 新增：评论用户ID
-        author: c.author.username,
-        avatar: c.author.avatar,
-        content: c.content,
-        createdAt: c.createdAt
-      }))
+      comments: post.postComments
+        .filter(c => c.author !== null && c.author !== undefined)  // 👈 过滤评论中作者为 null 的
+        .map(c => ({
+          id: c.id,
+          userId: c.author.id,
+          author: c.author.username,
+          avatar: c.author.avatar,
+          content: c.content,
+          createdAt: c.createdAt
+        }))
     }
 
     res.json({
@@ -233,32 +254,46 @@ router.get('/user/:userId', async (req, res) => {
           }
         },
         postComments: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                username: true,
+                avatar: true
+              }
+            }
+          },
           orderBy: { createdAt: 'desc' }
         }
       },
       orderBy: { createdAt: 'desc' }
     })
 
-    const formattedPosts = posts.map(p => ({
-      id: p.id,
-      userId: p.author.id,
-      title: p.title,
-      content: p.content,
-      author: p.author.username,
-      avatar: p.author.avatar,
-      images: p.images ? JSON.parse(p.images) : [],
-      likes: p.likes,
-      liked: false,
-      createdAt: p.createdAt,
-      comments: p.postComments.map(c => ({
-        id: c.id,
-        userId: c.author.id,
-        author: c.author.username,
-        avatar: c.author.avatar,
-        content: c.content,
-        createdAt: c.createdAt
+    // 👇 修复：过滤掉 author 为 null 的帖子
+    const formattedPosts = posts
+      .filter(p => p.author !== null && p.author !== undefined)
+      .map(p => ({
+        id: p.id,
+        userId: p.author.id,
+        title: p.title,
+        content: p.content,
+        author: p.author.username,
+        avatar: p.author.avatar,
+        images: p.images ? JSON.parse(p.images) : [],
+        likes: p.likes,
+        liked: false,
+        createdAt: p.createdAt,
+        comments: p.postComments
+          .filter(c => c.author !== null && c.author !== undefined)
+          .map(c => ({
+            id: c.id,
+            userId: c.author.id,
+            author: c.author.username,
+            avatar: c.author.avatar,
+            content: c.content,
+            createdAt: c.createdAt
+          }))
       }))
-    }))
 
     res.json({
       success: true,
@@ -314,7 +349,7 @@ router.post('/', authenticate, upload.array('images', 6), async (req, res) => {
 
     const formattedPost = {
       id: post.id,
-      userId: post.author.id,  // 👈 新增：用户ID
+      userId: post.author.id,
       title: post.title,
       content: post.content,
       author: post.author.username,
@@ -376,6 +411,11 @@ router.delete('/:id', authenticate, async (req, res) => {
 
     // 同时删除帖子下的所有评论
     await prisma.postComment.deleteMany({
+      where: { postId: id }
+    })
+
+    // 删除帖子点赞记录
+    await prisma.postLike.deleteMany({
       where: { postId: id }
     })
 
