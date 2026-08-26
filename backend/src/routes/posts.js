@@ -2,27 +2,32 @@
 const express = require('express')
 const { PrismaClient } = require('@prisma/client')
 const { authenticate } = require('../middleware/auth')
-const multer = require('multer')
-const path = require('path')
-const fs = require('fs')
-const cloudinary = require('cloudinary').v2  // 👈 新增
+const multer = require('multer')  // 👈 新增
+const path = require('path')      // 👈 新增
+const fs = require('fs')          // 👈 新增
 
 const router = express.Router()
 const prisma = new PrismaClient()
 
 // ============================================================
-// Cloudinary 配置
+// 配置 multer（图片上传）
 // ============================================================
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-})
+// 确保 com_pic 目录存在
+const comPicDir = path.join(__dirname, '../../uploads/com_pic')
+if (!fs.existsSync(comPicDir)) {
+  fs.mkdirSync(comPicDir, { recursive: true })
+}
 
-// ============================================================
-// 配置 multer（图片上传到 Cloudinary，使用内存存储）
-// ============================================================
-const storage = multer.memoryStorage()  // 👈 改用内存存储
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, comPicDir)
+  },
+  filename: (req, file, cb) => {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    const ext = path.extname(file.originalname)
+    cb(null, unique + ext)
+  }
+})
 
 const upload = multer({
   storage,
@@ -215,7 +220,7 @@ router.get('/user/:userId', async (req, res) => {
 })
 
 // ============================================================
-// 发布帖子（支持图片上传到 Cloudinary）
+// 发布帖子（支持图片上传）
 // ============================================================
 router.post('/', authenticate, upload.array('images', 6), async (req, res) => {
   try {
@@ -229,33 +234,12 @@ router.post('/', authenticate, upload.array('images', 6), async (req, res) => {
       return res.status(400).json({ message: '内容不能为空' })
     }
 
-    // 👇 上传图片到 Cloudinary
+    // 处理上传的图片
     const imageUrls = []
     if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        try {
-          const result = await new Promise((resolve, reject) => {
-            const uploadStream = cloudinary.uploader.upload_stream(
-              {
-                resource_type: 'image',
-                folder: 'ct-video/post-images',
-                public_id: `${Date.now()}-${Math.round(Math.random() * 1E9)}`,
-                use_filename: true,
-                unique_filename: true
-              },
-              (error, result) => {
-                if (error) reject(error)
-                else resolve(result)
-              }
-            )
-            uploadStream.end(file.buffer)
-          })
-          imageUrls.push(result.secure_url)  // 👈 Cloudinary 永久链接
-        } catch (uploadError) {
-          console.error('单张图片上传失败:', uploadError)
-          // 继续上传其他图片
-        }
-      }
+      req.files.forEach(file => {
+        imageUrls.push(`/uploads/com_pic/${file.filename}`)
+      })
     }
 
     const post = await prisma.post.create({
@@ -322,20 +306,19 @@ router.delete('/:id', authenticate, async (req, res) => {
       return res.status(403).json({ message: '无权删除此帖子' })
     }
 
-    // 删除帖子关联的图片文件（Cloudinary 上的）
-    // 注意：Cloudinary 文件无法通过 API 直接删除，这里只记录日志
-    // 如需删除，需要使用 cloudinary.uploader.destroy
+    // 删除帖子关联的图片文件
     if (post.images) {
       try {
         const images = JSON.parse(post.images)
-        // 可选：从 Cloudinary 删除图片
-        // for (const imageUrl of images) {
-        //   const publicId = imageUrl.split('/').slice(-2).join('/').split('.')[0]
-        //   await cloudinary.uploader.destroy(`ct-video/post-images/${publicId}`)
-        // }
-        console.log(`帖子 ${id} 的图片已从数据库移除，Cloudinary 文件保留`)
+        images.forEach(imageUrl => {
+          const filename = path.basename(imageUrl)
+          const filePath = path.join(comPicDir, filename)
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath)
+          }
+        })
       } catch (e) {
-        console.error('删除图片记录错误:', e)
+        console.error('删除图片文件错误:', e)
       }
     }
 
@@ -385,6 +368,9 @@ router.post('/:id/like', authenticate, async (req, res) => {
       }
     })
 
+    // 👇 导入通知函数
+    const { createNotification } = require('./notifications')
+
     if (existing) {
       // 取消点赞
       await prisma.postLike.delete({
@@ -412,6 +398,19 @@ router.post('/:id/like', authenticate, async (req, res) => {
         where: { id },
         data: { likes: { increment: 1 } }
       })
+
+      // 👇 发送通知（不通知自己）
+      if (userId !== post.authorId) {
+        await createNotification({
+          userId: post.authorId,
+          type: 'like',
+          content: `${req.user.username} 点赞了你的帖子`,
+          link: `/post/${id}`,
+          senderId: userId,
+          targetId: id
+        })
+      }
+
       res.json({ success: true, message: '点赞成功', liked: true })
     }
 
