@@ -94,6 +94,19 @@ router.post('/', authenticate, async (req, res) => {
       createdAt: comment.createdAt
     }
 
+    // 👇 发送通知（不通知自己）
+    const { createNotification } = require('./notifications')
+    if (userId !== post.authorId) {
+      await createNotification({
+        userId: post.authorId,
+        type: 'comment',
+        content: `${comment.author.username} 评论了你的帖子`,
+        link: `/post/${postId}`,
+        senderId: userId,
+        targetId: postId
+      })
+    }
+
     res.status(201).json({
       success: true,
       message: '评论发表成功',
