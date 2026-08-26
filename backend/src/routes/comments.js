@@ -106,6 +106,19 @@ router.post('/', authenticate, async (req, res) => {
       replies: []
     }
 
+    // 👇 发送通知（不通知自己）
+    const { createNotification } = require('./notifications')
+    if (userId !== video.authorId) {
+      await createNotification({
+        userId: video.authorId,
+        type: 'comment',
+        content: `${comment.author.username} 评论了你的视频`,
+        link: `/video/${videoId}`,
+        senderId: userId,
+        targetId: videoId
+      })
+    }
+
     res.status(201).json({
       success: true,
       message: '评论发表成功',
