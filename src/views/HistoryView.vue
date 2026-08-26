@@ -11,8 +11,14 @@
         清空历史
       </n-button>
     </div>
+
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-state">
+      <n-spin size="small" />
+      <span>加载中...</span>
+    </div>
     
-    <div v-if="historyVideos.length > 0" class="video-grid">
+    <div v-else-if="historyVideos.length > 0" class="video-grid">
       <VideoCard 
         v-for="video in historyVideos" 
         :key="video.id"
@@ -39,26 +45,54 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'  // 👈 添加 onMounted
 import { useRouter } from 'vue-router'
-import { NButton, NModal } from 'naive-ui'
+import { NButton, NModal, NSpin, useMessage } from 'naive-ui'  // 👈 添加 NSpin, useMessage
 import VideoCard from '@/components/video/VideoCard.vue'
 import { useVideoStore } from '@/stores/video'
 
 const router = useRouter()
+const message = useMessage()  // 👈 新增
 const videoStore = useVideoStore()
 
 const showClearModal = ref(false)
+const loading = ref(false)  // 👈 新增
+
 const historyVideos = computed(() => videoStore.getHistoryVideos)
 
 const goHome = () => {
   router.push('/')
 }
 
-const confirmClearHistory = () => {
-  videoStore.clearHistory()
-  showClearModal.value = false
+// 👇 新增：从后端加载历史
+const loadHistory = async () => {
+  loading.value = true
+  try {
+    await videoStore.loadHistory()
+  } catch (error) {
+    console.error('加载历史失败:', error)
+    message.error('加载历史失败，请重试')
+  } finally {
+    loading.value = false
+  }
 }
+
+// 👇 修改：清空历史（异步）
+const confirmClearHistory = async () => {
+  try {
+    await videoStore.clearHistory()
+    showClearModal.value = false
+    message.success('✅ 历史已清空')
+  } catch (error) {
+    console.error('清空历史失败:', error)
+    message.error('清空历史失败，请重试')
+  }
+}
+
+// 👇 新增：组件挂载时加载历史
+onMounted(() => {
+  loadHistory()
+})
 </script>
 
 <style scoped>
@@ -80,6 +114,16 @@ const confirmClearHistory = () => {
   font-weight: 600;
   color: #212121;
   margin: 0;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 0;
+  color: #999;
+  font-size: 14px;
 }
 
 .video-grid {
@@ -110,14 +154,18 @@ const confirmClearHistory = () => {
 }
 
 @media (max-width: 768px) {
-  .video-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 12px;
+  .history-container {
+    padding: 12px;
   }
   
   .history-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .video-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 12px;
   }
 }
