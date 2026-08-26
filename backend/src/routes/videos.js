@@ -247,6 +247,9 @@ router.post('/:id/like', authenticate, async (req, res) => {
       }
     })
 
+    // 👇 导入通知函数
+    const { createNotification } = require('./notifications')
+
     if (existing) {
       // 取消点赞
       await prisma.videoLike.delete({
@@ -276,6 +279,19 @@ router.post('/:id/like', authenticate, async (req, res) => {
         where: { id },
         data: { likes: { increment: 1 } }
       })
+
+      // 👇 发送通知（不通知自己）
+      if (userId !== video.authorId) {
+        await createNotification({
+          userId: video.authorId,
+          type: 'like',
+          content: `${req.user.username} 点赞了你的视频`,
+          link: `/video/${id}`,
+          senderId: userId,
+          targetId: id
+        })
+      }
+
       res.json({ success: true, message: '点赞成功', liked: true })
     }
 
