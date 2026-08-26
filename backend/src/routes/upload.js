@@ -5,32 +5,28 @@ const { authenticate } = require('../middleware/auth')
 const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
+const cloudinary = require('cloudinary').v2  // 👈 新增
 
 const router = express.Router()
 const prisma = new PrismaClient()
 
 // ============================================================
-// 配置 multer（视频上传）
+// Cloudinary 配置
 // ============================================================
-// 确保 videos 目录存在
-const videoDir = path.join(__dirname, '../../uploads/videos')
-if (!fs.existsSync(videoDir)) {
-  fs.mkdirSync(videoDir, { recursive: true })
-}
-
-const videoStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, videoDir)
-  },
-  filename: (req, file, cb) => {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    const ext = path.extname(file.originalname)
-    cb(null, unique + ext)
-  }
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 })
 
+// ============================================================
+// 配置 multer（内存存储，不再存到本地磁盘）
+// ============================================================
+// 注意：改用 memoryStorage，不再保存到本地磁盘
+const storage = multer.memoryStorage()
+
 const videoUpload = multer({
-  storage: videoStorage,
+  storage: storage,
   limits: { fileSize: 100 * 1024 * 1024 }, // 100MB 限制
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo']
@@ -43,7 +39,7 @@ const videoUpload = multer({
 })
 
 // ============================================================
-// 上传视频
+// 上传视频（存到 Cloudinary）
 // ============================================================
 router.post('/video', authenticate, videoUpload.single('video'), async (req, res) => {
   try {
@@ -68,15 +64,33 @@ router.post('/video', authenticate, videoUpload.single('video'), async (req, res
       }
     }
 
-    // 获取视频时长（简单实现，实际可用 ffprobe）
-    const duration = '00:00'
+    // 👇 上传视频到 Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'video',
+          folder: 'ct-video/videos',
+          public_id: `${Date.now()}-${Math.round(Math.random() * 1E9)}`,
+          use_filename: true,
+          unique_filename: true
+        },
+        (error, result) => {
+          if (error) reject(error)
+          else resolve(result)
+        }
+      )
+      uploadStream.end(req.file.buffer)
+    })
 
-    // 保存到数据库
+    // 获取视频时长（从 Cloudinary 返回）
+    const duration = result.duration ? `${Math.floor(result.duration / 60)}:${String(Math.floor(result.duration % 60)).padStart(2, '0')}` : '00:00'
+
+    // 保存到数据库（url 存 Cloudinary 的永久链接）
     const video = await prisma.video.create({
       data: {
         title: title.trim(),
         description: description || '',
-        url: `/uploads/videos/${req.file.filename}`,
+        url: result.secure_url,  // 👈 Cloudinary 永久链接
         cover: null,
         authorId: userId,
         views: 0,
@@ -125,23 +139,10 @@ router.post('/video', authenticate, videoUpload.single('video'), async (req, res
 })
 
 // ============================================================
-// 上传封面图
+// 上传封面图（存到 Cloudinary）
 // ============================================================
-const thumbDir = path.join(__dirname, '../../uploads/thumbnails')
-if (!fs.existsSync(thumbDir)) {
-  fs.mkdirSync(thumbDir, { recursive: true })
-}
-
-const thumbStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, thumbDir)
-  },
-  filename: (req, file, cb) => {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    const ext = path.extname(file.originalname)
-    cb(null, unique + ext)
-  }
-})
+// 👇 改用 memoryStorage
+const thumbStorage = multer.memoryStorage()
 
 const thumbUpload = multer({
   storage: thumbStorage,
@@ -167,7 +168,25 @@ router.post('/thumbnail', authenticate, thumbUpload.single('thumbnail'), async (
       return res.status(400).json({ message: '请指定视频ID' })
     }
 
-    const coverUrl = `/uploads/thumbnails/${req.file.filename}`
+    // 👇 上传封面图到 Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'image',
+          folder: 'ct-video/thumbnails',
+          public_id: `${Date.now()}-${Math.round(Math.random() * 1E9)}`,
+          use_filename: true,
+          unique_filename: true
+        },
+        (error, result) => {
+          if (error) reject(error)
+          else resolve(result)
+        }
+      )
+      uploadStream.end(req.file.buffer)
+    })
+
+    const coverUrl = result.secure_url  // 👈 Cloudinary 永久链接
 
     // 更新视频封面
     const video = await prisma.video.update({
