@@ -45,6 +45,17 @@
             上传视频
           </n-tooltip>
 
+          <!-- 👇 新增：私信按钮，添加红点 + Tooltip -->
+          <n-tooltip placement="bottom">
+            <template #trigger>
+              <n-button quaternary circle @click="goToConversations" class="notification-btn">
+                <n-icon size="20"><ChatbubbleEllipsesOutline /></n-icon>
+                <span v-if="conversationStore.hasUnread" class="notification-dot"></span>
+              </n-button>
+            </template>
+            私信
+          </n-tooltip>
+
           <!-- 👇 修改：通知按钮，添加红点 + Tooltip -->
           <n-tooltip placement="bottom">
             <template #trigger>
@@ -118,15 +129,18 @@ import {
   NotificationsOutline,
   HeartOutline,
   TimeOutline,
-  CloudUploadOutline  // 👈 新增：上传图标
+  CloudUploadOutline,  // 👈 新增：上传图标
+  ChatbubbleEllipsesOutline  // 👈 新增：私信图标
 } from '@vicons/ionicons5'
 import LoginModal from '@/components/user/LoginModal.vue'
 import { useUserStore } from '@/stores/user'
 import { useNotificationStore } from '@/stores/notification'  // 👈 新增：通知 Store
+import { useConversationStore } from '@/stores/conversation'  // 👈 新增：私信 Store
 
 const router = useRouter()
 const userStore = useUserStore()
 const notificationStore = useNotificationStore()  // 👈 新增
+const conversationStore = useConversationStore()  // 👈 新增
 
 const searchKeyword = ref('')
 const showLoginModal = ref(false)
@@ -165,6 +179,11 @@ const goToUpload = () => {
   router.push('/upload')
 }
 
+// 👇 新增：跳转到私信页面
+const goToConversations = () => {
+  router.push('/conversations')
+}
+
 // 👇 新增：跳转到通知页面
 const goToNotifications = () => {
   router.push('/notifications')
@@ -198,6 +217,7 @@ const handleDropdownSelect = (key) => {
   if (key === 'logout') {
     userStore.logout()
     notificationStore.reset()  // 👈 登出时重置通知状态
+    conversationStore.reset()  // 👈 登出时重置私信状态
   } else if (key === 'profile') {
     router.push('/user/' + (userStore.user?.id || 'me'))
   } else if (key === 'favorites') {
@@ -211,19 +231,23 @@ const onLoginSuccess = (user) => {
   console.log('登录成功', user)
   // 👇 登录后获取未读通知数量
   notificationStore.fetchUnreadCount()
+  // 👇 登录后获取未读私信数量
+  conversationStore.fetchUnreadCount()
 }
 
-// 👇 新增：定时获取未读通知数量（轮询）
+// 👇 新增：定时获取未读通知数量和私信数量（轮询）
 let pollInterval = null
 
 onMounted(() => {
   if (userStore.getIsLoggedIn) {
     notificationStore.fetchUnreadCount()
+    conversationStore.fetchUnreadCount()
   }
   // 每30秒刷新一次未读数量
   pollInterval = setInterval(() => {
     if (userStore.getIsLoggedIn) {
       notificationStore.fetchUnreadCount()
+      conversationStore.fetchUnreadCount()
     }
   }, 30000)
 })
