@@ -58,7 +58,12 @@ export const useConversationStore = defineStore('conversation', () => {
     try {
       const data = await getMessages(conversationId, page)
       if (data.success) {
-        currentConversation.value = data.data
+        // 👇 修改：确保 currentConversation 正确设置
+        currentConversation.value = {
+          id: data.data.id || data.data.conversationId,
+          otherUser: data.data.otherUser,
+          messages: data.data.messages || []
+        }
         messages.value = data.data.messages || []
         return messages.value
       }
@@ -74,6 +79,9 @@ export const useConversationStore = defineStore('conversation', () => {
   // 发送消息
   const sendMessageTo = async (conversationId, content) => {
     try {
+      if (!conversationId) {
+        throw new Error('会话ID无效')
+      }
       const data = await sendMessage(conversationId, content)
       if (data.success) {
         // 将新消息添加到列表
