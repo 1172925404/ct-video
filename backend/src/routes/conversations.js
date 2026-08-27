@@ -199,7 +199,8 @@ router.get('/:id/messages', authenticate, async (req, res) => {
     res.json({
       success: true,
       data: {
-        conversationId,
+        id: conversationId,  // 👈 新增：添加 id 字段
+        conversationId: conversationId,
         otherUser: {
           id: otherUser.id,
           username: otherUser.username,
