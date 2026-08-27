@@ -4,12 +4,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql"  
   url      = env("DATABASE_URL")
 }
 
 // ============================================================
-// 用户表
+// 用户表  部署后provider用postgresql
 // ============================================================
 model User {
   id        Int      @id @default(autoincrement())
@@ -40,6 +40,11 @@ model User {
   // 👇 新增：通知关联
   notifications Notification[] @relation("user")    // 我收到的通知
   sentNotifications Notification[] @relation("sender") // 我发出的通知
+
+  // 👇 新增：私信关联
+  conversations1    Conversation[]  @relation("ConversationUser1")  // 作为用户1的会话
+  conversations2    Conversation[]  @relation("ConversationUser2")  // 作为用户2的会话
+  messages          Message[]       @relation("MessageSender")      // 发送的消息
 }
 
 // ============================================================
@@ -226,4 +231,36 @@ model Notification {
 
   user      User     @relation("user", fields: [userId], references: [id])
   sender    User     @relation("sender", fields: [senderId], references: [id])
+}
+
+// ============================================================
+// 👇 新增：私信会话表
+// ============================================================
+model Conversation {
+  id        Int      @id @default(autoincrement())
+  user1Id   Int      // 用户A
+  user2Id   Int      // 用户B
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user1     User     @relation("ConversationUser1", fields: [user1Id], references: [id])
+  user2     User     @relation("ConversationUser2", fields: [user2Id], references: [id])
+  messages  Message[]
+
+  @@unique([user1Id, user2Id])  // 同一对用户只有一个会话
+}
+
+// ============================================================
+// 👇 新增：私信消息表
+// ============================================================
+model Message {
+  id             Int      @id @default(autoincrement())
+  conversationId Int
+  senderId       Int
+  content        String
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  sender         User         @relation("MessageSender", fields: [senderId], references: [id])
 }
