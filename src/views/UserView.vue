@@ -143,6 +143,18 @@
               :user-id="profileUser.id"
               @follow-change="loadProfile"
             />
+            <!-- 👇 新增：发私信按钮 -->
+            <n-button
+              v-if="profileUser && profileUser.id !== userStore.user?.id"
+              type="primary"
+              size="small"
+              @click="handleSendMessage"
+            >
+              <template #icon>
+                <n-icon><ChatbubbleEllipsesOutline /></n-icon>
+              </template>
+              发私信
+            </n-button>
           </div>
         </div>
 
@@ -277,17 +289,19 @@ import {
   NSpace,
   useMessage
 } from 'naive-ui'
-import { CreateOutline } from '@vicons/ionicons5'
+import { CreateOutline, ChatbubbleEllipsesOutline } from '@vicons/ionicons5'  // 👈 修改：导入 ChatbubbleEllipsesOutline
 import dayjs from 'dayjs'
 import { useUserStore } from '@/stores/user'
 import { getUserProfile, getUserVideos } from '@/api/user'
 import VideoCard from '@/components/video/VideoCard.vue'
 import FollowButton from '@/components/user/FollowButton.vue'
+import { useConversationStore } from '@/stores/conversation'  // 👈 新增：导入私信 Store
 
 const route = useRoute()
 const router = useRouter()
 const message = useMessage()
 const userStore = useUserStore()
+const conversationStore = useConversationStore()  // 👈 新增
 
 // ===== 他人的用户信息 =====
 const profileUser = ref(null)
@@ -509,6 +523,21 @@ const goToFollows = () => {
 
 const goToFollowers = () => {
   router.push(`/follow/${userStore.user.id}`)
+}
+
+// 👇 新增：发送私信
+const handleSendMessage = async () => {
+  if (!profileUser.value) return
+  const userId = profileUser.value.id
+  try {
+    // 获取或创建会话
+    const conv = await conversationStore.openConversation(userId)
+    // 跳转到私信聊天页面
+    router.push(`/conversations/${conv.id}`)
+  } catch (error) {
+    console.error('创建会话失败:', error)
+    message.error(error.message || '创建会话失败，请重试')
+  }
 }
 
 // ===== 监听路由参数变化 =====
