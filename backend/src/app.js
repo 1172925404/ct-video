@@ -5,7 +5,14 @@ const path = require('path')
 
 const app = express()
 
-app.use(cors())
+// 👇 修改：显式配置 CORS
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}))
+
 app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 
@@ -45,6 +52,14 @@ app.use('/api/upload', uploadRoutes)   // 👈 新增：上传路由
 app.use('/api/notifications', notificationRoutes)  // 👈 新增：通知路由
 app.use('/api/users', userRoutes)  // 👈 新增：用户路由
 app.use('/api/conversations', conversationRoutes)  // 👈 新增：私信路由
+
+// 👇 新增：处理 OPTIONS 预检请求
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.sendStatus(200)
+})
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: '服务运行正常' })
