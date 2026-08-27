@@ -31,6 +31,7 @@ const followRoutes = require('./routes/follows')  // 👈 新增：关注路由
 const uploadRoutes = require('./routes/upload')   // 👈 新增：上传路由
 const { router: notificationRoutes } = require('./routes/notifications')  // 👈 新增：通知路由
 const userRoutes = require('./routes/users')  // 👈 新增：用户路由
+const conversationRoutes = require('./routes/conversations')  // 👈 新增：私信路由
 
 app.use('/api/auth', authRoutes)
 app.use('/api/videos', videoRoutes)
@@ -43,6 +44,7 @@ app.use('/api/follows', followRoutes)  // 👈 新增
 app.use('/api/upload', uploadRoutes)   // 👈 新增：上传路由
 app.use('/api/notifications', notificationRoutes)  // 👈 新增：通知路由
 app.use('/api/users', userRoutes)  // 👈 新增：用户路由
+app.use('/api/conversations', conversationRoutes)  // 👈 新增：私信路由
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: '服务运行正常' })
