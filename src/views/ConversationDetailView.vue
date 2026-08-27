@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'  // 👈 添加 watch
 import { useRoute, useRouter } from 'vue-router'
 import { NButton, NIcon, NInput, NSpin } from 'naive-ui'
 import { ArrowBack } from '@vicons/ionicons5'
@@ -91,9 +91,14 @@ const currentConversation = computed(() => conversationStore.currentConversation
 const messages = computed(() => conversationStore.messages)
 const loading = computed(() => conversationStore.loading)
 
+// 👇 修改：使用路由参数获取会话ID
+const getConversationId = () => {
+  return Number(route.params.id)
+}
+
 // 加载会话消息
 const loadMessages = async () => {
-  const conversationId = Number(route.params.id)
+  const conversationId = getConversationId()
   if (isNaN(conversationId)) {
     router.push('/conversations')
     return
@@ -105,11 +110,22 @@ const loadMessages = async () => {
 // 发送消息
 const handleSend = async () => {
   const content = messageInput.value.trim()
-  if (!content || !currentConversation.value) return
+  if (!content) return
 
-  await conversationStore.sendMessageTo(currentConversation.value.id, content)
-  messageInput.value = ''
-  scrollToBottom()
+  // 👇 修改：使用路由参数获取会话ID，而不是 currentConversation.value.id
+  const conversationId = getConversationId()
+  if (isNaN(conversationId)) {
+    console.error('无效的会话ID:', route.params.id)
+    return
+  }
+
+  try {
+    await conversationStore.sendMessageTo(conversationId, content)
+    messageInput.value = ''
+    scrollToBottom()
+  } catch (error) {
+    console.error('发送消息失败:', error)
+  }
 }
 
 // 返回
@@ -135,6 +151,14 @@ const scrollToBottom = async () => {
 const formatTime = (time) => {
   return dayjs(time).fromNow()
 }
+
+// 👇 新增：监听路由参数变化
+watch(
+  () => route.params.id,
+  () => {
+    loadMessages()
+  }
+)
 
 // 组件挂载
 onMounted(() => {
